@@ -1,0 +1,92 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+android {
+    namespace = "com.example.balian"
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
+
+    signingConfigs {
+        release {
+            // Tentukan lokasi keystore di folder android/app
+            storeFile file("my-release-key.jks")  
+            storePassword "balian" 
+            keyAlias "balian"              
+            keyPassword "balian"      
+        }
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId = "id.co.balian"
+        minSdk = flutter.minSdkVersion
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+
+            applicationVariants.all { variant ->
+                variant.outputs.each { output ->
+                    if (variant.buildType.name == "release") {
+                        // Ganti dengan nama file yang diinginkan untuk APK
+                        output.outputFileName = "balian.apk"
+                    }
+                }
+            }
+        }
+    }
+
+    // Konfigurasi AAB
+    applicationVariants.all { variant ->
+        if (variant.buildType.name == "release") {
+            variant.outputs.each { output ->
+                output.outputFileName = "balian.aab"
+            }
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE'
+    }
+
+    lintOptions {
+        baseline file("lint-baseline.xml")
+    }
+}
+
+flutter {
+    source = "../.."
+}
+
+dependencies {
+    implementation 'com.google.api-client:google-api-client:1.31.5' 
+    implementation 'com.google.crypto.tink:tink-android:1.7.0' 
+    implementation 'joda-time:joda-time:2.10.14'
+
+    implementation 'com.google.errorprone:error_prone_annotations:2.8.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    implementation 'commons-logging:commons-logging:1.2'
+
+}
