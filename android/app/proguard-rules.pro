@@ -24,3 +24,7 @@
 -dontwarn javax.lang.model.element.Modifier
 -dontwarn org.joda.convert.FromString
 -dontwarn org.joda.convert.ToString
+
+
+-keep class com.google.android.** { *; }
+-dontwarn com.google.android.**

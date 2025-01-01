@@ -1,4 +1,4 @@
-package com.example.balian
+package id.my.sod.m
 
 import io.flutter.embedding.android.FlutterActivity
 
