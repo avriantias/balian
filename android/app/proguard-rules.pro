@@ -28,3 +28,8 @@
 
 -keep class com.google.android.** { *; }
 -dontwarn com.google.android.**
+
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class retrofit2.** { *; }
+-dontwarn retrofit2.**

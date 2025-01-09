@@ -9,6 +9,7 @@ import 'package:balian/shared/theme.dart';
 import 'package:balian/views/widgets/buttons.dart';
 import 'package:balian/views/widgets/home_category.dart';
 import 'package:balian/views/widgets/home_product.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,7 +34,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    context.read<ProductBloc>().add(ProductGetAll());
+    final productBloc = context.read<ProductBloc>();
+    if (productBloc.state is! ProductSuccess) {
+      productBloc.add(ProductGetAll());
+    }
   }
 
   @override
@@ -43,13 +47,14 @@ class _HomePageState extends State<HomePage> {
         if (state is CartSuccess) {
           AnimatedSnackBar.material(
             state.message,
-            type: AnimatedSnackBarType.error,
+            type: AnimatedSnackBarType.success,
           ).show(context);
         } else if (state is CartFailure) {
           AnimatedSnackBar.material(
             state.error,
-            type: AnimatedSnackBarType.success,
+            type: AnimatedSnackBarType.error,
           ).show(context);
+          Navigator.pushNamed(context, '/address-page');
         }
       },
       child: Scaffold(
@@ -96,9 +101,20 @@ class _HomePageState extends State<HomePage> {
       height: 132,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(
-          image: NetworkImage(categories[activeIndex].banner),
+      ),
+      child: CachedNetworkImage(
+        imageUrl: categories[activeIndex].banner,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xff33CC33)),
+          ),
         ),
+        errorWidget: (context, url, error) =>
+            const Icon(Icons.image_not_supported, size: 40),
+        cacheKey: categories[activeIndex]
+            .id
+            .toString(), // Cache berdasarkan ID kategori
       ),
     );
   }
@@ -180,6 +196,7 @@ class _HomePageState extends State<HomePage> {
     final activeCategory =
         categories.isNotEmpty ? categories[activeIndex] : null;
 
+    // Filter berdasarkan kategori
     final filteredByCategory = activeIndex == 0
         ? products
         : (activeCategory != null
@@ -188,12 +205,18 @@ class _HomePageState extends State<HomePage> {
                 .toList()
             : []);
 
+    // Filter berdasarkan pencarian
     final filteredProducts = searchQuery.isNotEmpty
         ? filteredByCategory
             .where(
                 (product) => product.name.toLowerCase().contains(searchQuery))
             .toList()
         : filteredByCategory;
+
+    // Exclude produk yang tidak memiliki variants
+    final availableProducts = filteredProducts
+        .where((product) => product.variants.isNotEmpty)
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,35 +239,30 @@ class _HomePageState extends State<HomePage> {
             mainAxisSpacing: 20,
             childAspectRatio: 0.65,
           ),
-          itemCount: filteredProducts.length,
+          itemCount: availableProducts.length,
           itemBuilder: (context, index) {
-            final product = filteredProducts[index];
+            final product = availableProducts[index];
 
-            if (product.variants.isNotEmpty) {
-              final price = product.variants[0].price;
-              final priceDouble = price.toDouble();
-              final allVariants = product.variants.map<String>((variant) {
-                return variant.name?.toString() ??
-                    ''; // Mengkonversi ke String jika perlu
-              }).toList();
+            final price = product.variants[0].price;
+            final priceDouble = price.toDouble();
+            final allVariants = product.variants.map<String>((variant) {
+              return variant.name?.toString() ?? '';
+            }).toList();
 
-              final variantString = allVariants.join(', ');
+            final variantString = allVariants.join(', ');
 
-              return HomeProduct(
-                name: product.name,
-                imageUrl: product.thumbnail,
-                price: priceDouble,
-                variant: variantString,
-                onTap: () => showProductDetail(
-                  context,
-                  product,
-                  allVariants, // Kirim sebagai List<String>
-                  product.variants, // Kirim sebagai raw variants
-                ),
-              );
-            } else {
-              return const Center(child: Text('Produk Tidak Tersedia'));
-            }
+            return HomeProduct(
+              name: product.name,
+              imageUrl: product.thumbnail,
+              price: priceDouble,
+              variant: variantString,
+              onTap: () => showProductDetail(
+                context,
+                product,
+                allVariants,
+                product.variants,
+              ),
+            );
           },
         ),
         const SizedBox(height: 20),

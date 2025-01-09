@@ -25,14 +25,17 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         );
 
         // Validasi respons dari API
-        if (response['status'] == true) {
+        if (response['status'] == 'success') {
+          // Periksa apakah 'status' adalah 'success'
           emit(CartSuccess(
-              message: response['message'] ??
-                  'Produk berhasil ditambahkan ke keranjang.'));
+            message: response['message'] ??
+                'Produk berhasil ditambahkan ke keranjang.',
+          ));
         } else {
           emit(CartFailure(
-              error: response['message'] ??
-                  'Terjadi kesalahan saat menambahkan produk.'));
+            error: response['message'] ??
+                'Terjadi kesalahan saat menambahkan produk.',
+          ));
         }
       } catch (e) {
         emit(CartFailure(error: 'Silahkan isi alamat terlebih dahulu!!!'));
@@ -55,7 +58,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         // Panggil service untuk mengambil data keranjang tanpa menyertakan token
         final items = await cartService.getCartItems();
 
-        emit(CartItemsLoaded(items: items));
+        emit(
+          CartItemsLoaded(
+            items: items.carts,
+            shippingMethods: items.shippingMethods,
+          ),
+        );
       } catch (e) {
         emit(CartFailure(
             error: 'Gagal mengambil data keranjang: ${e.toString()}'));
@@ -70,7 +78,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         if (response['status'] == true) {
           // Fetch data keranjang terbaru setelah penghapusan
           final updatedItems = await cartService.getCartItems();
-          emit(CartItemsLoaded(items: updatedItems));
+          emit(CartItemsLoaded(
+            items: updatedItems.carts,
+            shippingMethods: updatedItems.shippingMethods,
+          ));
         } else {
           emit(CartFailure(
               error: response['message'] ?? 'Gagal menghapus item'));

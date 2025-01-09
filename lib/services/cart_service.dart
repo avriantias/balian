@@ -27,15 +27,15 @@ class CartService {
     try {
       final response = await http.post(url, headers: headers, body: body);
 
-      if (response.statusCode == 302) {
-        return {'status': false, 'message': 'Redirect detected'};
-      } else if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 422) {
+        return {'status': false, 'message': 'Redirect detected'};
       } else {
         return {
           'status': false,
           'message':
-              'Gagal menambahkan ke keranjang. Status: ${response.statusCode}',
+              'Gagal menambahkan ke keranjang. \nSilahkan tambahkan alamat terlebih dahulu!',
         };
       }
     } catch (e) {
@@ -46,7 +46,7 @@ class CartService {
     }
   }
 
-  Future<List<CartItem>> getCartItems() async {
+  Future<Cart> getCartItems() async {
     // Mendapatkan token dari SecureStorage
     final token = await _secureStorageService.getToken();
 
@@ -64,11 +64,10 @@ class CartService {
       final response = await http.get(url, headers: headers);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body); // Tidak langsung cast ke List
+        final data = jsonDecode(response.body);
         if (data['data'] != null) {
           // Parsing daftar item dari field 'data'
-          final items = data['data']['carts'] as List;
-          return items.map((json) => CartItem.fromJson(json)).toList();
+          return Cart.fromJson(data['data']);
         } else {
           throw Exception('Data tidak ditemukan');
         }

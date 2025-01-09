@@ -11,6 +11,8 @@ class TransactionItemModel {
   final User user;
   late bool isExpanded = false;
   final int shippingPrice;
+  final int shippingMethodId;
+  final int appFee;
   final dynamic notes;
   final String additionalCost;
 
@@ -26,6 +28,8 @@ class TransactionItemModel {
     required this.details,
     required this.user,
     required this.shippingPrice,
+    required this.shippingMethodId,
+    required this.appFee,
     required this.notes,
     required this.additionalCost,
   });
@@ -46,6 +50,8 @@ class TransactionItemModel {
           json['user'],
         ),
         shippingPrice: json['shipping_price'],
+        shippingMethodId: json['shipping_method_id'],
+        appFee: json['app_fee'],
         notes: json['notes'],
         additionalCost: json['additional_cost'],
       );
@@ -64,6 +70,8 @@ class TransactionItemModel {
     User? user,
     bool? isExpanded,
     int? shippingPrice,
+    int? shippingMethodId,
+    int? appFee,
     // ignore: unnecessary_question_mark
     dynamic? notes,
     String? additionalCost,
@@ -80,6 +88,8 @@ class TransactionItemModel {
       details: details ?? this.details,
       user: user ?? this.user,
       shippingPrice: shippingPrice ?? this.shippingPrice,
+      shippingMethodId: shippingMethodId ?? this.shippingMethodId,
+      appFee: appFee ?? this.appFee,
       notes: notes ?? this.notes,
       additionalCost: additionalCost ?? this.additionalCost,
     );

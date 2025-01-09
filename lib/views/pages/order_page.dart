@@ -269,6 +269,17 @@ class _OrderPageState extends State<OrderPage>
       return input[0].toUpperCase() + input.substring(1).toLowerCase();
     }
 
+    String serviceMethod = transaction.shippingMethodId.toString();
+
+    Map<String, String> serviceNames = {
+      "1": "Reguler",
+      "2": "Express",
+      "3": "Instan",
+    };
+
+    String serviceName = serviceNames[serviceMethod] ??
+        "Unknown"; // Default jika ID tidak ditemukan
+
     TextStyle getTextStyle(String status) {
       if (status == 'pending') {
         return orangeTextStyle;
@@ -284,9 +295,33 @@ class _OrderPageState extends State<OrderPage>
     }
 
     return ListTile(
-      title: Text(
-        'Kode Transaksi: ${transaction.code}',
-        style: blackTextStyle.copyWith(fontSize: 13, fontWeight: semibold),
+      title: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 58,
+            height: 18,
+            decoration: BoxDecoration(
+              color: greenColor,
+              border: Border.all(
+                color: greenColor,
+              ),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              serviceName,
+              textAlign: TextAlign.center,
+              style: whiteTextStyle.copyWith(fontSize: 10, fontWeight: bold),
+            ),
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          Text(
+            'Kode Transaksi: ${transaction.code}',
+            style: blackTextStyle.copyWith(fontSize: 13, fontWeight: semibold),
+          ),
+        ],
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -298,6 +333,9 @@ class _OrderPageState extends State<OrderPage>
           Text(
             'Total Bill: ${formatCurrency(transaction.totalPrice.toDouble() + double.parse(transaction.additionalCost) + transaction.shippingPrice.toDouble())}',
             style: blackTextStyle.copyWith(fontSize: 12, fontWeight: bold),
+          ),
+          const SizedBox(
+            height: 5,
           ),
         ],
       ),
@@ -334,12 +372,13 @@ class _OrderPageState extends State<OrderPage>
             },
           ),
           const Divider(thickness: 1.0),
+
           _buildSummaryRow(
-              'Subtotal', formatCurrency(transaction.totalPrice.toDouble())),
-          _buildSummaryRow(
-              'Ongkir', formatCurrency(transaction.shippingPrice.toDouble())),
+              'Biaya Layanan', formatCurrency(transaction.appFee.toDouble())),
           _buildSummaryRow('Biaya Tambahan',
               formatCurrency(double.parse(transaction.additionalCost))),
+          _buildSummaryRow('Biaya Pengiriman',
+              formatCurrency(transaction.shippingPrice.toDouble())),
           const Divider(thickness: 1.0),
           _buildSummaryRow(
             'Total',

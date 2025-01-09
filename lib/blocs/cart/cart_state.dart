@@ -1,4 +1,5 @@
 import 'package:balian/models/cart_model.dart';
+import 'package:balian/models/shippingMethod_model.dart';
 
 abstract class CartState {}
 
@@ -20,8 +21,9 @@ class CartFailure extends CartState {
 
 class CartItemsLoaded extends CartState {
   final List<CartItem> items;
+  final List<ShippingMethod> shippingMethods;
 
-  CartItemsLoaded({required this.items});
+  CartItemsLoaded({required this.items, required this.shippingMethods});
 }
 
 class CartItemsDeleted extends CartState {

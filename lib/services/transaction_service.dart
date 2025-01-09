@@ -48,7 +48,7 @@ class TransactionService extends ChangeNotifier {
     );
     if (response.statusCode == 200) {
       final Map<String, dynamic> decodedResponse = jsonDecode(response.body);
-      final List<dynamic> data = decodedResponse['data']; // Akses kunci 'data'
+      final List<dynamic> data = decodedResponse['data'];
       return data.map((e) => TransactionItemModel.fromJson(e)).toList();
     } else {
       throw Exception('Failed to fetch transactions: ${response.reasonPhrase}');

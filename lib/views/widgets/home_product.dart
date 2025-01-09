@@ -1,4 +1,5 @@
 import 'package:balian/shared/theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -38,14 +39,21 @@ class HomeProduct extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.network(
-              imageUrl,
-              // height: 100,
+            CachedNetworkImage(
+              imageUrl: imageUrl,
               width: double.infinity,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(Icons.image_not_supported, size: 60);
-              },
+              placeholder: (context, url) => Container(
+                height: 100,
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xff33CC33)),
+                ),
+              ),
+              errorWidget: (context, url, error) => const Icon(
+                Icons.image_not_supported,
+                size: 60,
+              ),
             ),
             const SizedBox(
               height: 10,

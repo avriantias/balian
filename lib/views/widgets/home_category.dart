@@ -1,5 +1,6 @@
 import 'package:balian/shared/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class HomeCategory extends StatelessWidget {
   final String imageUrl;
@@ -34,9 +35,18 @@ class HomeCategory extends StatelessWidget {
                   width: 3,
                 ),
                 borderRadius: BorderRadius.circular(8),
-                image: DecorationImage(
-                  image: NetworkImage(imageUrl),
+              ),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => const Center(
+                  child: CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xff33CC33)),
+                  ),
                 ),
+                errorWidget: (context, url, error) =>
+                    const Icon(Icons.image_not_supported, size: 40),
               ),
             ),
             Text(

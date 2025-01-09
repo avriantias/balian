@@ -5,9 +5,11 @@ import 'package:balian/blocs/cart/cart_state.dart';
 import 'package:balian/blocs/transaction/transaction_bloc.dart';
 import 'package:balian/models/addTransaction_model.dart';
 import 'package:balian/models/cart_model.dart';
+import 'package:balian/models/shippingMethod_model.dart';
 import 'package:balian/shared/theme.dart';
 import 'package:balian/views/pages/bottomnavigation_page.dart';
 import 'package:balian/views/widgets/buttons.dart';
+import 'package:balian/views/widgets/shippingMethodWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +24,9 @@ class CartPage extends StatefulWidget {
 class _CartPageState extends State<CartPage> {
   final TextEditingController notesController = TextEditingController();
   bool isSelectAll = false;
-  List<CartItem> items = []; // Akan diupdate melalui Bloc
+  List<CartItem> items = [];
+  List<ShippingMethod> shippingMethods = [];
+  ShippingMethod? selectedMethod;
 
   @override
   void initState() {
@@ -141,54 +145,80 @@ class _CartPageState extends State<CartPage> {
     );
   }
 
-  // Fungsi untuk mengumpulkan dan mengirim data transaksi
   Future<void> addTransaction() async {
+    // Mendapatkan item yang dipilih
     List<int> checkedItemIds =
         items.where((item) => item.isChecked).map((item) => item.id).toList();
-    Map<String, int> quantities = {};
 
+    // Membuat map untuk menyimpan jumlah item yang dipilih
+    Map<String, int> quantities = {};
     for (var item in items) {
       if (item.isChecked) {
         quantities[item.id.toString()] = item.quantity;
       }
     }
 
+    // Validasi: Jika tidak ada item yang dipilih
     if (checkedItemIds.isEmpty) {
       AnimatedSnackBar.material(
-        'Silahkan pilih product yang ingin dipesan!',
+        'Silahkan pilih produk yang ingin dipesan!',
         type: AnimatedSnackBarType.error,
       ).show(context);
       return;
     }
 
-    final double totalPrice = items
-        .where((item) => item.isChecked)
-        .fold(0, (sum, item) => sum + (item.variant.price * item.quantity));
+    // Validasi: Pastikan metode pengiriman telah dipilih
+    if (selectedMethod == null) {
+      AnimatedSnackBar.material(
+        'Silahkan pilih metode pengiriman!',
+        type: AnimatedSnackBarType.error,
+      ).show(context);
+      return;
+    }
 
+    // Mengambil biaya layanan dari metode pengiriman yang dipilih
+    final serviceFee = selectedMethod!.cost;
+
+    // Menghitung total harga
+    final double subtotal = items
+        .where((item) => item.isChecked)
+        .fold(0.0, (sum, item) => sum + (item.variant.price * item.quantity));
+
+    final double totalPrice = subtotal + serviceFee;
+
+    // Membuat model transaksi
     final transaction = TransactionModel(
       totalPrice: totalPrice.toInt(),
       checkedItems: checkedItemIds,
       quantities: quantities,
-      shippingPrice: 0.toInt(),
-      appFee: 0.toInt(),
-      notes: notesController.text.trim(),
+      shipping_method: selectedMethod!.id, // ID metode pengiriman
+      shippingPrice: 0.toInt(), // Ubah jika ada ongkos kirim tambahan
+      appFee: serviceFee, // Biaya layanan
+      notes: notesController.text.trim(), // Catatan dari pengguna
     );
 
+    // Debugging: Cetak data transaksi
+
+    // Kirim transaksi ke BLoC
     context
         .read<TransactionBloc>()
         .add(AddTransactionEvent(transaction: transaction));
 
-    // Simulasi status transaksi berhasil
-    bool isSuccess = true; // Ganti sesuai dengan hasil dari API atau logic
+    // Simulasi hasil API (true = sukses, false = gagal)
+    bool isSuccess = true;
 
+    // Penanganan hasil transaksi
     if (isSuccess) {
-      // Routing ke halaman "Pesanan Berhasil"
       Navigator.pushNamed(context, '/pesananberhasil-page');
-
-      // Menampilkan snackbar berhasil
       AnimatedSnackBar.material(
         'Pesanan Berhasil Dibuat!',
         type: AnimatedSnackBarType.success,
+      ).show(context);
+      // ignore: dead_code
+    } else {
+      AnimatedSnackBar.material(
+        'Gagal membuat pesanan. Silakan coba lagi!',
+        type: AnimatedSnackBarType.error,
       ).show(context);
     }
   }
@@ -299,7 +329,19 @@ class _CartPageState extends State<CartPage> {
                   _buildHeaderSection(),
                   _buildProductList(),
                   _buildCardNote(notesController),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
+                  ShippingMethodWidget(
+                    shippingMethods: state.shippingMethods,
+                    onMethodSelected: (method) {
+                      setState(() {
+                        selectedMethod = method;
+                      });
+                      // Misalnya: Simpan pilihan metode pengiriman dalam variabel atau state
+                    },
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
                   _buildOrderInfo(),
                   const SizedBox(height: 16),
                   CustomFilledButton(
@@ -463,6 +505,9 @@ class _CartPageState extends State<CartPage> {
         .where((item) => item.isChecked)
         .fold(0.0, (sum, item) => sum + (item.variant.price * item.quantity));
 
+    final double serviceFee =
+        selectedMethod != null ? selectedMethod!.cost.toDouble() : 0.0;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -481,8 +526,10 @@ class _CartPageState extends State<CartPage> {
           const SizedBox(height: 8),
           _buildOrderInfoRow("Ongkos Kirim", 0),
           const SizedBox(height: 8),
+          _buildOrderInfoRow("Biaya Layanan", serviceFee),
+          const SizedBox(height: 8),
           const Divider(color: Colors.white),
-          _buildOrderInfoRow("Total", subtotal, isBold: true),
+          _buildOrderInfoRow("Total", subtotal + serviceFee, isBold: true),
         ],
       ),
     );
@@ -561,33 +608,12 @@ Widget _buildCardNote(notesController) {
       const SizedBox(
         height: 10,
       ),
-      Card(
-        color: lightBackgroundColor,
-        child: const Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.info_outline_rounded, color: Colors.blue),
-                  SizedBox(width: 8),
-                  Text(
-                    'Info Waktu Pengiriman (Khusus Pesanan Proses):',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8),
-              BulletPointText(
-                text: 'Pesan 00:00 - 12:00 → Diantar besok pagi (5:30 - 10:00)',
-              ),
-              BulletPointText(
-                text:
-                    'Pesan 12:00 - 24:00 → Diantar besok siang (15:30 - 18:00)',
-              ),
-            ],
-          ),
+      Container(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          "Pilih Metode Pengiriman",
+          textAlign: TextAlign.start,
+          style: blackTextStyle.copyWith(fontSize: 14),
         ),
       ),
     ],

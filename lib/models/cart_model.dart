@@ -1,3 +1,33 @@
+import 'package:balian/models/shippingMethod_model.dart';
+
+class Cart {
+  final List<CartItem> carts;
+  final List<ShippingMethod> shippingMethods;
+  final int shippingPrice;
+  final int appFee;
+
+  Cart({
+    required this.carts,
+    required this.shippingMethods,
+    required this.shippingPrice,
+    required this.appFee,
+  });
+
+  factory Cart.fromJson(Map<String, dynamic> json) {
+    // Debug log
+    return Cart(
+      carts: (json['carts'] as List)
+          .map((cartJson) => CartItem.fromJson(cartJson))
+          .toList(),
+      shippingMethods: (json['shipping_methods'] as List)
+          .map((methodJson) => ShippingMethod.fromJson(methodJson))
+          .toList(),
+      shippingPrice: json['shipping_price'],
+      appFee: json['app_fee'],
+    );
+  }
+}
+
 class CartItem {
   final int id;
   final int userId;
